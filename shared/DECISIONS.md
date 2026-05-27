@@ -42,16 +42,16 @@ React Native — yêu cầu từ super app + cross-platform efficiency.
 | ADR | Title | Status | Date |
 |-----|-------|--------|------|
 | [ADR-001](./adr/ADR-001-react-native-framework.md) | React Native framework | Active | 2026-05-27 |
+| [ADR-002](./adr/ADR-002-typescript-strict-mode.md) | TypeScript with strict mode | Active | 2026-05-27 |
+| [ADR-003](./adr/ADR-003-state-management.md) | State management (Zustand + Context) | Active | 2026-05-27 |
+| [ADR-004](./adr/ADR-004-react-navigation.md) | React Navigation for in-app routing | Active | 2026-05-27 |
+| [ADR-005](./adr/ADR-005-styling.md) | Styling (StyleSheet + theme tokens) | Active | 2026-05-27 |
+| [ADR-006](./adr/ADR-006-testing.md) | Testing (Jest + RTL; E2E deferred to Maestro) | Active | 2026-05-27 |
+| [ADR-007](./adr/ADR-007-metro-bundler.md) | Metro bundler (default RN) | Active (tentative) | 2026-05-27 |
 
 ## Open ADRs (cần làm)
 
-- [ ] ADR-002: TypeScript or JavaScript
-- [ ] ADR-003: State management
-- [ ] ADR-004: Navigation
-- [ ] ADR-005: Styling
-- [ ] ADR-006: Testing
-- [ ] ADR-007: Bundling
-- [ ] ADR-008: Super app native modules whitelist
+- [ ] ADR-008: Super app native modules whitelist (chờ spec từ super app team)
 
 ## D-003: Unify decision.yaml schema with content frontmatter
 
@@ -100,7 +100,7 @@ Khi `/intake` tạo ADR mới, `/pr` pre-flight check (theo content.yaml schema)
 - **Date:** 2026-05-27
 - **Deciders:** @dokhiem2k4
 - **Status:** Active
-- **Related PR:** TBD (after this commit)
+- **Related PR:** #3
 
 ### TL;DR
 CI workflows `validate-frontmatter.yml` và `validate-schemas.yml` được sửa để:
@@ -137,5 +137,89 @@ PR #1 (ADR-002) fail CI sau khi PR #2 (schema fix) merge vì 2 lý do:
 
 - Nếu thêm path mới (vd: `shared/specs/`) cần status enum riêng
 - Sau 3 tháng nếu thấy edge case khác (timezone, datetime với time component)
+
+---
+
+## D-005 → ADR-002: TypeScript với strict mode
+
+- **Date:** 2026-05-27
+- **Deciders:** @dokhiem2k4
+- **Lane:** high-risk
+- **Status:** Active
+- **Related ADR:** [ADR-002](./adr/ADR-002-typescript-strict-mode.md)
+- **Related PR:** #4
+
+### TL;DR
+TypeScript bật toàn bộ strict flags (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, ...) cho codebase greenfield. Mục tiêu: type safety cross-feature khi 8 dev làm song song, refactor an toàn khi super app SDK đổi signature.
+
+---
+
+## D-006 → ADR-003: State management — Zustand cho cross-feature state
+
+- **Date:** 2026-05-27
+- **Deciders:** @dokhiem2k4
+- **Lane:** high-risk
+- **Status:** Active
+- **Related ADR:** [ADR-003](./adr/ADR-003-state-management.md)
+- **Related PR:** #4
+
+### TL;DR
+Layering: local state qua `useState`/`useReducer`, cross-feature state qua Zustand (~1.2KB, no native dep), ambient providers qua React Context. Loại Redux Toolkit (overkill ~21KB), Jotai (atom model overhead), Context-only (re-render perf).
+
+---
+
+## D-007 → ADR-004: React Navigation cho in-app routing
+
+- **Date:** 2026-05-27
+- **Deciders:** @dokhiem2k4
+- **Lane:** high-risk
+- **Status:** Active
+- **Related ADR:** [ADR-004](./adr/ADR-004-react-navigation.md)
+- **Related PR:** #4
+
+### TL;DR
+React Navigation v6 với typed route params. Deep link qua `services/superApp/navigation.ts` wrapper. Native deps (gesture-handler, reanimated, screens) — BLOCKER cần verify với super app team.
+
+---
+
+## D-008 → ADR-005: Styling — StyleSheet + centralized theme tokens
+
+- **Date:** 2026-05-27
+- **Deciders:** @dokhiem2k4
+- **Lane:** high-risk
+- **Status:** Active
+- **Related ADR:** [ADR-005](./adr/ADR-005-styling.md)
+- **Related PR:** #4
+
+### TL;DR
+RN `StyleSheet.create()` + design tokens trong `src/theme/`. Zero dep, không Babel plugin → an toàn với super app sandbox. Loại NativeWind (cần Babel plugin), styled-components (~12KB runtime), restyle (~5KB, lock-in).
+
+---
+
+## D-009 → ADR-006: Testing — Jest + RTL (unit/integration); Maestro deferred (E2E)
+
+- **Date:** 2026-05-27
+- **Deciders:** @dokhiem2k4
+- **Lane:** high-risk
+- **Status:** Active
+- **Related ADR:** [ADR-006](./adr/ADR-006-testing.md)
+- **Related PR:** #4
+
+### TL;DR
+Tier 1 (active): Jest + `@testing-library/react-native` + `jest-native` matchers. Mock super app SDK ở `tests/mocks/superApp/`. Tier 2 (deferred): Maestro cho E2E khi có 2 feature complete. Loại Detox (cần modify app build, conflict super app sandbox).
+
+---
+
+## D-010 → ADR-007: Metro bundler (default RN)
+
+- **Date:** 2026-05-27
+- **Deciders:** @dokhiem2k4
+- **Lane:** high-risk
+- **Status:** Active (tentative)
+- **Related ADR:** [ADR-007](./adr/ADR-007-metro-bundler.md)
+- **Related PR:** #4
+
+### TL;DR
+Metro default với `blockList` cho `_context/`, `_meta/`, `shared/`, `.claude/`, `.github/`. Loại Re.Pack (setup phức tạp, team chưa có exp). Revisit nếu bundle vượt limit hoặc super app yêu cầu module federation.
 
 ---
