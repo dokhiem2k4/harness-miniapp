@@ -1,87 +1,93 @@
 # CODEOWNERS — Auto-assign reviewer cho từng vùng
 #
-# Format: [path pattern] @username @org/team
+# Format: [path pattern] @username
 #
 # Rules:
 # - Path matching giống .gitignore (glob patterns)
 # - Owner sau cùng wins nếu nhiều rule match
 # - GitHub auto-request review từ owners khi có PR
+# - GitHub KHÔNG cho phép cùng 1 user approve nhiều lần (đếm là 1 reviewer)
+#   → Để đòi N reviewers, list N user KHÁC nhau
 #
 # Yêu cầu kích hoạt: Settings → Branches → Branch protection rule "main"
-# → "Require review from Code Owners"
+# → "Require review from Code Owners" + "Required number of approvals: N"
 
 # ============================================================================
 # DEFAULT — Mọi file chưa được phân
 # ============================================================================
-* @dokhiem2k4
+*                       @dokhiem2k4
 
 # ============================================================================
-# AGENT SHIMS — Chỉ team lead sửa
+# AGENT SHIMS — Quan trọng, team lead approve
 # ============================================================================
-/CLAUDE.md             @dokhiem2k4
-/AGENTS.md             @dokhiem2k4
-/CONTRIBUTING.md       @dokhiem2k4
-
-# ============================================================================
-# HARNESS CORE — _context và _meta
-# ============================================================================
-# Đổi context cần team lead approve
-/_context/             @dokhiem2k4
-
-# Đổi rules, templates, schemas cần team lead + 1 reviewer
-/_meta/                @dokhiem2k4 @dokhiem2k4
-
-# Schemas có quyền cao hơn — đổi schema = đổi format toàn bộ file đã có
-/_meta/schemas/        @dokhiem2k4 @dokhiem2k4 @dokhiem2k4
+/CLAUDE.md              @dokhiem2k4
+/AGENTS.md              @dokhiem2k4
+/CONTRIBUTING.md        @dokhiem2k4
 
 # ============================================================================
-# SHARED CONTENT — Source of truth
+# HARNESS CORE — _context và _meta (high-risk PR area)
+# Cần team lead + 1 reviewer khác
 # ============================================================================
-# Content thường — team lead review
-/shared/content/       @dokhiem2k4
+/_context/              @dokhiem2k4 @2Tmy
+/_meta/                 @dokhiem2k4 @2Tmy
+/_meta/schemas/         @dokhiem2k4 @2Tmy @hoangnxhust
 
-# Decisions phải có team lead + 1 reviewer
-/shared/DECISIONS.md   @dokhiem2k4 @dokhiem2k4
-
-# ADR cao hơn — cần 2 reviewers
-/shared/adr/           @dokhiem2k4 @dokhiem2k4 @dokhiem2k4
-
-# Retrospectives — team lead viết (member contribute qua issue)
+# ============================================================================
+# SHARED CONTENT — Source of truth cho decisions
+# ============================================================================
+/shared/content/        @dokhiem2k4
+/shared/DECISIONS.md    @dokhiem2k4 @mvhoang92
+/shared/adr/            @dokhiem2k4 @2Tmy @hoangnxhust
 /shared/retrospectives/ @dokhiem2k4
-
-# CHANGELOG auto-generated, không nên sửa thủ công
-/shared/CHANGELOG.md   @dokhiem2k4
+/shared/CHANGELOG.md    @dokhiem2k4
 
 # ============================================================================
-# CI/CD CONFIG — Chỉ team lead
+# CI/CD CONFIG — Chỉ team lead + 1 senior
 # ============================================================================
-/.github/              @dokhiem2k4
-/.github/workflows/    @dokhiem2k4
-/CODEOWNERS            @dokhiem2k4
+/.github/               @dokhiem2k4 @2Tmy
+/.github/workflows/     @dokhiem2k4 @2Tmy
+/CODEOWNERS             @dokhiem2k4
 
 # ============================================================================
-# CLAUDE COMMANDS — Team lead + reviewer
+# CLAUDE COMMANDS — Team lead + 1 reviewer
 # ============================================================================
-/.claude/              @dokhiem2k4 @dokhiem2k4
+/.claude/               @dokhiem2k4 @hoangnxhust
 
 # ============================================================================
 # SCRIPTS — Team lead
 # ============================================================================
-/scripts/              @dokhiem2k4
+/scripts/               @dokhiem2k4
 
 # ============================================================================
-# DOMAIN-SPECIFIC (tuỳ chỉnh theo team bạn)
+# CODE — src/ và tests/
 # ============================================================================
-# Ví dụ: nếu có chuyên gia cho từng lĩnh vực
-# /shared/content/food/        @food-expert-username
-# /shared/content/culture/     @culture-expert-username
-# /shared/content/language/    @language-expert-username
+/src/                   @dokhiem2k4
+
+# Khi đã chia feature ownership, uncomment + customize:
+# /src/features/auth/          @hoangnxhust
+# /src/features/[feature-2]/   @mvhoang92
+# /src/features/[feature-3]/   @kawaii-bunny
+# /src/services/superApp/      @2Tmy
+# /src/navigation/             @Minhle1212
+# /src/components/             @xwnsnowy
+
+/tests/                 @dokhiem2k4
+
+# ============================================================================
+# BUILD CONFIGS — Team lead
+# ============================================================================
+/package.json           @dokhiem2k4
+/package-lock.json      @dokhiem2k4
+/tsconfig.json          @dokhiem2k4 @2Tmy
+/babel.config.js        @dokhiem2k4
+/metro.config.js        @dokhiem2k4 @2Tmy
+/.gitignore             @dokhiem2k4
 
 # ============================================================================
 # NOTES
 # ============================================================================
-# - Đổi tên placeholder @dokhiem2k4, @dokhiem2k4, @dokhiem2k4
-#   thành GitHub username thật của team bạn
-# - Một file có thể có nhiều owner — GitHub sẽ request review từ TẤT CẢ
-# - Owner KHÔNG cần phải approve hết, chỉ cần đủ số approve theo branch protection rule
-# - Owner KHÔNG approve được PR của chính mình (cần người khác)
+# - Khi member tự assign feature ownership → uncomment các dòng ở phần CODE
+# - Một file có thể có nhiều owner — GitHub request review từ TẤT CẢ owner đó
+# - Owner KHÔNG approve được PR của chính mình → luôn cần người khác
+# - Branch protection rule trên GitHub sẽ require N approvals tùy file
+#   gợi ý: 1 cho src/, 2 cho shared/adr/, _context/, _meta/
