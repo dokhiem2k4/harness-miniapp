@@ -218,9 +218,9 @@ Functional components + hooks. KHÔNG class components.
 |-----|-------|--------|-------|
 | ADR-001 | React Native framework | ✅ Active | `@dokhiem2k4` |
 | ADR-002 | TypeScript + tsconfig strict | ✅ Active | `@dokhiem2k4` |
-| ADR-003 | State management (Redux/Zustand/Jotai) | 📝 TODO | TBD |
+| ADR-003 | State management (Zustand + Context + useState) | ✅ Active | `@dokhiem2k4` |
 | ADR-004 | React Navigation setup pattern | ✅ Active | `@dokhiem2k4` |
-| ADR-005 | Styling (StyleSheet/Tailwind/styled-components) | 📝 TODO | TBD |
-| ADR-006 | Testing (Jest + RTL/Detox) | 📝 TODO | TBD |
+| ADR-005 | Styling (StyleSheet + theme tokens) | ✅ Active | `@dokhiem2k4` |
+| ADR-006 | Testing (Jest + RTL; E2E deferred to Maestro) | ✅ Active | `@dokhiem2k4` |
 | ADR-007 | Bundler (Metro vs Re.Pack) | ✅ Active (tentative) | `@dokhiem2k4` |
 | ADR-008+ | TBD theo nhu cầu | — | — |

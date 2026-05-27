@@ -101,11 +101,11 @@ harness-miniapp/
 | Language         | **TypeScript** (strict)    | ✅ ADR-002 (Active)   |
 | Navigation       | **React Navigation**       | ✅ ADR-004 (Active)   |
 | Bundling         | **Metro** (RN default)     | ✅ ADR-007 (tentative)|
-| State management | TBD                        | 📝 ADR-003 cần làm    |
-| Styling          | TBD                        | 📝 ADR-005 cần làm    |
-| Testing          | TBD                        | 📝 ADR-006 cần làm    |
+| State management | **Zustand** + Context + useState | ✅ ADR-003 (Active)   |
+| Styling          | **StyleSheet** + theme tokens    | ✅ ADR-005 (Active)   |
+| Testing          | **Jest + RTL** (E2E deferred)    | ✅ ADR-006 (Active)   |
 
-> **Mỗi ô "TBD" = 1 ADR cần làm trong tuần 1-2.** Xem [`shared/adr/`](shared/adr) để track.
+> 7 ADR tech stack đã quyết. Xem [`shared/adr/`](shared/adr) để track.
 
 ---
 
