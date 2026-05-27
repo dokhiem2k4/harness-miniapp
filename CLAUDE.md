@@ -203,11 +203,11 @@ Trước khi đề xuất bất kỳ thư viện / API / pattern nào:
 
 ## 🆔 Định danh
 
-- **Repo:** `dokhiem2k4/[mini-app-name]`
+- **Repo:** `dokhiem2k4/harness-miniapp`
 - **Super app:** Custom Super App
 - **Team lead:** `@dokhiem2k4`
 - **Harness version:** GitHub Edition v1.0 — Mini App customization
-- **Setup date:** `[YYYY-MM-DD]`
+- **Setup date:** `2026-05-27`
 
 ---
 
