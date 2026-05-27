@@ -29,9 +29,9 @@ jobs:
           import sys
           import yaml
           import jsonschema
+          import datetime
           from pathlib import Path
 
-          # Schema mapping: file path pattern → schema file
           SCHEMA_MAP = {
               'shared/content/': '_meta/schemas/content.yaml',
               'shared/DECISIONS.md': '_meta/schemas/decision.yaml',
@@ -52,12 +52,21 @@ jobs:
           )
           changed = result.stdout.strip().split('\n')
 
+          # Helper: convert date objects → strings for JSON schema compat
+          def normalize_dates(obj):
+              if isinstance(obj, dict):
+                  return {k: normalize_dates(v) for k, v in obj.items()}
+              if isinstance(obj, list):
+                  return [normalize_dates(v) for v in obj]
+              if isinstance(obj, (datetime.date, datetime.datetime)):
+                  return obj.isoformat() if isinstance(obj, datetime.datetime) else obj.strftime('%Y-%m-%d')
+              return obj
+
           errors = []
           for file_path in changed:
               if not file_path.endswith('.md') or not os.path.exists(file_path):
                   continue
 
-              # Find matching schema
               schema_file = None
               for pattern, schema_name in SCHEMA_MAP.items():
                   if file_path.startswith(pattern) or file_path == pattern:
@@ -72,13 +81,12 @@ jobs:
                   errors.append(f"❌ Schema not found: {schema_file}")
                   continue
 
-              # Extract frontmatter
               with open(file_path) as f:
                   content = f.read()
 
               match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
               if not match:
-                  continue  # No frontmatter to validate
+                  continue
 
               try:
                   fm = yaml.safe_load(match.group(1))
@@ -86,7 +94,9 @@ jobs:
                   errors.append(f"❌ {file_path}: Invalid YAML — {e}")
                   continue
 
-              # Validate
+              # Normalize dates before schema validation
+              fm = normalize_dates(fm)
+
               try:
                   jsonschema.validate(instance=fm, schema=schemas[schema_name])
                   print(f"✅ {file_path}: matches {schema_name}")

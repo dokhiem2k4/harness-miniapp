@@ -17,7 +17,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Lấy cả lịch sử để diff với main
           fetch-depth: 0
 
       - name: Set up Python
@@ -32,7 +31,6 @@ jobs:
       - name: Get changed markdown files
         id: changed-files
         run: |
-          # Lấy danh sách file .md thay đổi trong PR
           CHANGED=$(git diff --name-only origin/main...HEAD -- '*.md' | tr '\n' ' ')
           echo "files=$CHANGED" >> $GITHUB_OUTPUT
           echo "Changed files: $CHANGED"
@@ -45,14 +43,22 @@ jobs:
           import sys
           import yaml
           import re
+          import datetime
 
+          # Required fields PER PATH
           REQUIRED_FIELDS = {
               'shared/content/': ['title', 'author', 'created', 'status', 'type'],
               'shared/adr/': ['id', 'title', 'date', 'deciders', 'status'],
               'shared/retrospectives/': ['period', 'date', 'author'],
           }
 
-          VALID_STATUSES = ['draft', 'review', 'needs-revision', 'approved', 'rejected', 'deprecated']
+          # Status enums PER PATH (ADR vs content have different lifecycle)
+          STATUS_ENUMS = {
+              'shared/content/': ['draft', 'review', 'needs-revision', 'approved', 'rejected', 'deprecated'],
+              'shared/adr/': ['Proposed', 'Active', 'Superseded', 'Reverted', 'Deprecated'],
+              'shared/retrospectives/': ['draft', 'review', 'approved'],
+          }
+
           VALID_TYPES = ['tiny', 'normal', 'high-risk']
 
           files = """${{ steps.changed-files.outputs.files }}""".strip().split()
@@ -62,11 +68,13 @@ jobs:
               if not file_path.endswith('.md') or not os.path.exists(file_path):
                   continue
 
-              # Skip files outside tracked paths
+              # Determine path category
               required = None
+              valid_statuses = None
               for prefix, fields in REQUIRED_FIELDS.items():
                   if file_path.startswith(prefix):
                       required = fields
+                      valid_statuses = STATUS_ENUMS.get(prefix, [])
                       break
               if required is None:
                   continue
@@ -91,21 +99,26 @@ jobs:
                   if field not in fm:
                       errors.append(f"❌ {file_path}: Missing required field `{field}`")
 
-              # Check enums
-              if 'status' in fm and fm['status'] not in VALID_STATUSES:
-                  errors.append(f"❌ {file_path}: status `{fm['status']}` not in {VALID_STATUSES}")
+              # Check status enum (per path)
+              if 'status' in fm and valid_statuses and fm['status'] not in valid_statuses:
+                  errors.append(f"❌ {file_path}: status `{fm['status']}` not in {valid_statuses}")
+
+              # Check type enum (only for content lane classification)
               if 'type' in fm and fm['type'] not in VALID_TYPES:
                   errors.append(f"❌ {file_path}: type `{fm['type']}` not in {VALID_TYPES}")
 
-              # Check date format
-              import datetime
+              # Check date format — convert datetime.date to string first
               for date_field in ['created', 'date', 'last_updated']:
                   if date_field in fm:
-                      val = str(fm[date_field])
+                      val = fm[date_field]
+                      # YAML auto-parses YYYY-MM-DD into datetime.date
+                      if isinstance(val, datetime.date):
+                          val = val.isoformat()
+                      val = str(val)
                       if not re.match(r'^\d{4}-\d{2}-\d{2}$', val):
                           errors.append(f"❌ {file_path}: {date_field} `{val}` should be YYYY-MM-DD")
 
-              if not errors or not any(file_path in e for e in errors):
+              if not any(file_path in e for e in errors):
                   print(f"✅ {file_path}: frontmatter OK")
 
           if errors:
