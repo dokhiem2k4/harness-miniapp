@@ -1,0 +1,68 @@
+name: CI — Build Mini App Bundle
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'metro.config.js'
+      - 'babel.config.js'
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build mini app bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build:miniapp
+        # NOTE: Add build:miniapp script khi có super app CLI
+        # vd: "build:miniapp": "react-native bundle --platform=ios --dev=false --entry-file=index.js --bundle-output=dist/main.jsbundle"
+        continue-on-error: true
+
+      - name: Check bundle size
+        run: |
+          # TODO: Adjust BUNDLE_PATH theo super app spec
+          BUNDLE_PATH="dist/main.jsbundle"
+
+          if [ ! -f "$BUNDLE_PATH" ]; then
+            echo "⚠️  Bundle not found at $BUNDLE_PATH (build may have failed)"
+            exit 0   # Don't fail during initial setup
+          fi
+
+          SIZE_BYTES=$(stat -c%s "$BUNDLE_PATH" 2>/dev/null || stat -f%z "$BUNDLE_PATH")
+          SIZE_MB=$(echo "scale=2; $SIZE_BYTES / 1048576" | bc)
+
+          # TODO: Set MAX_SIZE_MB theo super app limit
+          MAX_SIZE_MB=2.0
+
+          echo "📦 Bundle size: ${SIZE_MB} MB (max: ${MAX_SIZE_MB} MB)"
+
+          if (( $(echo "$SIZE_MB > $MAX_SIZE_MB" | bc -l) )); then
+            echo "❌ Bundle exceeds super app size limit!"
+            exit 1
+          fi
+
+          echo "✅ Bundle size OK"
+
+      - name: Upload bundle artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: miniapp-bundle
+          path: dist/
+          retention-days: 7

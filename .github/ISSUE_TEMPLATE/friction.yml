@@ -1,0 +1,89 @@
+name: 🔥 Friction Report
+description: Báo cáo ma sát với quy trình harness (thay BACKLOG.md cũ)
+title: "[FRICTION] "
+labels: ["friction"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Cảm ơn bạn đã ghi friction!**
+        
+        Harness lớn lên từ friction. Mỗi báo cáo giúp team cải thiện quy trình.
+        Team lead sẽ review hàng tuần và có thể promote thành submission/Decision Record.
+
+  - type: textarea
+    id: pain
+    attributes:
+      label: 😩 Pain point — Bạn gặp khó khăn gì?
+      description: Mô tả cụ thể tình huống bạn gặp trở ngại với quy trình
+      placeholder: |
+        Ví dụ: "Khi tạo branch mới, tôi không biết slug bao nhiêu ký tự là OK. Convention nói tối đa 50 nhưng không có ví dụ rõ."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 📊 Mức độ
+      description: Friction này ảnh hưởng đến công việc bạn thế nào?
+      options:
+        - "🟢 Khó chịu nhẹ — vẫn làm được"
+        - "🟡 Cản trở — mất thêm thời gian"
+        - "🔴 Blocker — không làm được đến khi fix"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: 🔁 Tần suất
+      description: Bạn gặp friction này bao nhiêu lần?
+      options:
+        - "1 lần (chưa rõ có lặp lại không)"
+        - "Vài lần (lặp lại trong cùng task)"
+        - "Mỗi lần làm task tương tự"
+        - "Hằng ngày"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 📂 Context
+      description: Bạn đang làm task gì khi gặp friction này?
+      placeholder: |
+        - Task: Viết bài về văn hoá uống trà
+        - Lane: normal
+        - File đang sửa: shared/content/articles/...
+        - Bước hiện tại: chuẩn bị tạo branch
+    validations:
+      required: false
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: 🩹 Workaround bạn đã làm (nếu có)
+      description: Bạn đã xử lý tạm thế nào?
+      placeholder: |
+        Đã rút slug ngắn lại bằng cảm tính
+    validations:
+      required: false
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: 💡 Đề xuất giải pháp (optional)
+      description: Bạn nghĩ harness nên thay đổi thế nào?
+      placeholder: |
+        Thêm 5 ví dụ slug tốt/xấu vào CONTRIBUTING.md
+        Hoặc thêm check trong CI nếu slug quá dài
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: ✅ Xác nhận
+      options:
+        - label: Tôi đã search issues hiện có, friction này chưa được ghi
+          required: true
+        - label: Tôi không workaround vĩnh viễn — sẵn sàng follow giải pháp mới khi harness update
+          required: true

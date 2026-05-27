@@ -1,0 +1,103 @@
+name: Validate Schemas
+
+on:
+  pull_request:
+    paths:
+      - '_meta/schemas/**'
+      - 'shared/**/*.md'
+
+jobs:
+  validate:
+    name: JSON Schema validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install pyyaml jsonschema
+
+      - name: Validate against schemas
+        run: |
+          python <<'EOF'
+          import os
+          import re
+          import sys
+          import yaml
+          import jsonschema
+          from pathlib import Path
+
+          # Schema mapping: file path pattern → schema file
+          SCHEMA_MAP = {
+              'shared/content/': '_meta/schemas/content.yaml',
+              'shared/DECISIONS.md': '_meta/schemas/decision.yaml',
+              'shared/adr/': '_meta/schemas/decision.yaml',
+          }
+
+          # Load all schemas
+          schemas = {}
+          for schema_path in Path('_meta/schemas').glob('*.yaml'):
+              with open(schema_path) as f:
+                  schemas[schema_path.name] = yaml.safe_load(f)
+
+          # Get changed files from PR
+          import subprocess
+          result = subprocess.run(
+              ['git', 'diff', '--name-only', 'origin/main...HEAD'],
+              capture_output=True, text=True
+          )
+          changed = result.stdout.strip().split('\n')
+
+          errors = []
+          for file_path in changed:
+              if not file_path.endswith('.md') or not os.path.exists(file_path):
+                  continue
+
+              # Find matching schema
+              schema_file = None
+              for pattern, schema_name in SCHEMA_MAP.items():
+                  if file_path.startswith(pattern) or file_path == pattern:
+                      schema_file = schema_name
+                      break
+
+              if not schema_file:
+                  continue
+
+              schema_name = os.path.basename(schema_file)
+              if schema_name not in schemas:
+                  errors.append(f"❌ Schema not found: {schema_file}")
+                  continue
+
+              # Extract frontmatter
+              with open(file_path) as f:
+                  content = f.read()
+
+              match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+              if not match:
+                  continue  # No frontmatter to validate
+
+              try:
+                  fm = yaml.safe_load(match.group(1))
+              except yaml.YAMLError as e:
+                  errors.append(f"❌ {file_path}: Invalid YAML — {e}")
+                  continue
+
+              # Validate
+              try:
+                  jsonschema.validate(instance=fm, schema=schemas[schema_name])
+                  print(f"✅ {file_path}: matches {schema_name}")
+              except jsonschema.ValidationError as e:
+                  errors.append(f"❌ {file_path}: {e.message}\n   Path: {' → '.join(str(p) for p in e.path)}")
+
+          if errors:
+              print("\n=== SCHEMA VALIDATION FAILED ===")
+              for e in errors:
+                  print(e)
+              sys.exit(1)
+          else:
+              print("\n✅ All files match their schemas!")
+          EOF

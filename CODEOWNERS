@@ -1,0 +1,87 @@
+# CODEOWNERS — Auto-assign reviewer cho từng vùng
+#
+# Format: [path pattern] @username @org/team
+#
+# Rules:
+# - Path matching giống .gitignore (glob patterns)
+# - Owner sau cùng wins nếu nhiều rule match
+# - GitHub auto-request review từ owners khi có PR
+#
+# Yêu cầu kích hoạt: Settings → Branches → Branch protection rule "main"
+# → "Require review from Code Owners"
+
+# ============================================================================
+# DEFAULT — Mọi file chưa được phân
+# ============================================================================
+* @dokhiem2k4
+
+# ============================================================================
+# AGENT SHIMS — Chỉ team lead sửa
+# ============================================================================
+/CLAUDE.md             @dokhiem2k4
+/AGENTS.md             @dokhiem2k4
+/CONTRIBUTING.md       @dokhiem2k4
+
+# ============================================================================
+# HARNESS CORE — _context và _meta
+# ============================================================================
+# Đổi context cần team lead approve
+/_context/             @dokhiem2k4
+
+# Đổi rules, templates, schemas cần team lead + 1 reviewer
+/_meta/                @dokhiem2k4 @dokhiem2k4
+
+# Schemas có quyền cao hơn — đổi schema = đổi format toàn bộ file đã có
+/_meta/schemas/        @dokhiem2k4 @dokhiem2k4 @dokhiem2k4
+
+# ============================================================================
+# SHARED CONTENT — Source of truth
+# ============================================================================
+# Content thường — team lead review
+/shared/content/       @dokhiem2k4
+
+# Decisions phải có team lead + 1 reviewer
+/shared/DECISIONS.md   @dokhiem2k4 @dokhiem2k4
+
+# ADR cao hơn — cần 2 reviewers
+/shared/adr/           @dokhiem2k4 @dokhiem2k4 @dokhiem2k4
+
+# Retrospectives — team lead viết (member contribute qua issue)
+/shared/retrospectives/ @dokhiem2k4
+
+# CHANGELOG auto-generated, không nên sửa thủ công
+/shared/CHANGELOG.md   @dokhiem2k4
+
+# ============================================================================
+# CI/CD CONFIG — Chỉ team lead
+# ============================================================================
+/.github/              @dokhiem2k4
+/.github/workflows/    @dokhiem2k4
+/CODEOWNERS            @dokhiem2k4
+
+# ============================================================================
+# CLAUDE COMMANDS — Team lead + reviewer
+# ============================================================================
+/.claude/              @dokhiem2k4 @dokhiem2k4
+
+# ============================================================================
+# SCRIPTS — Team lead
+# ============================================================================
+/scripts/              @dokhiem2k4
+
+# ============================================================================
+# DOMAIN-SPECIFIC (tuỳ chỉnh theo team bạn)
+# ============================================================================
+# Ví dụ: nếu có chuyên gia cho từng lĩnh vực
+# /shared/content/food/        @food-expert-username
+# /shared/content/culture/     @culture-expert-username
+# /shared/content/language/    @language-expert-username
+
+# ============================================================================
+# NOTES
+# ============================================================================
+# - Đổi tên placeholder @dokhiem2k4, @dokhiem2k4, @dokhiem2k4
+#   thành GitHub username thật của team bạn
+# - Một file có thể có nhiều owner — GitHub sẽ request review từ TẤT CẢ
+# - Owner KHÔNG cần phải approve hết, chỉ cần đủ số approve theo branch protection rule
+# - Owner KHÔNG approve được PR của chính mình (cần người khác)

@@ -1,0 +1,86 @@
+name: 🐛 Bug — Harness/CI lỗi
+description: Báo lỗi với harness, CI workflows, hoặc scripts
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Dùng template này khi:**
+        - CI workflow báo lỗi không hợp lý
+        - Scripts trong `/scripts/` chạy sai
+        - Slash command không hoạt động đúng
+        - File trong harness bị broken (link, schema, etc.)
+
+  - type: textarea
+    id: what
+    attributes:
+      label: 🐛 Lỗi gì?
+      description: Mô tả ngắn lỗi gặp phải
+      placeholder: |
+        CI validate-frontmatter fail dù file của tôi có frontmatter đầy đủ
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 🔁 Cách reproduce
+      description: Các bước để gặp lại lỗi
+      placeholder: |
+        1. Tạo file shared/content/test.md với frontmatter có field "tags" là array
+        2. Push branch
+        3. CI báo "tags must be array" mặc dù đã là array
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: ✅ Expected behavior
+      placeholder: |
+        CI nên pass vì frontmatter đúng schema
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: ❌ Actual behavior
+      description: Paste error log nếu có
+      placeholder: |
+        ```
+        ❌ shared/content/test.md: tags must be array
+        ```
+
+  - type: input
+    id: pr-link
+    attributes:
+      label: 🔗 PR/CI run link (nếu có)
+      placeholder: "https://github.com/org/repo/actions/runs/123456"
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 📊 Severity
+      options:
+        - "🟢 Annoying — vẫn workaround được"
+        - "🟡 Blocker cho 1 task của tôi"
+        - "🔴 Blocker cho cả team"
+    validations:
+      required: true
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: 🩹 Workaround (nếu có)
+      placeholder: |
+        Tạm xoá tags field rồi mới merge được
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: ✅ Xác nhận
+      options:
+        - label: Tôi đã search issues hiện có, bug này chưa được report
+          required: true

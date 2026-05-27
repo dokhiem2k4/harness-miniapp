@@ -1,0 +1,84 @@
+name: Markdown Lint
+
+on:
+  pull_request:
+    paths:
+      - '**/*.md'
+
+jobs:
+  lint:
+    name: Lint markdown files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install markdownlint-cli2
+        run: npm install -g markdownlint-cli2
+
+      - name: Lint markdown
+        run: |
+          markdownlint-cli2 \
+            "**/*.md" \
+            "#node_modules" \
+            "#.github" \
+            --config .markdownlint.json \
+            || true   # Non-blocking warning for now; remove "|| true" để enforce
+
+      - name: Check file naming convention
+        run: |
+          python3 <<'EOF'
+          import os
+          import re
+          import sys
+
+          # Pattern: [letters/numbers/dashes]-YYYY-MM-DD.md
+          # Hoặc: ALL_CAPS.md cho file đặc biệt
+          # Hoặc: README.md, CLAUDE.md, etc.
+          PATTERN_CONTENT = re.compile(r'^[a-z0-9][a-z0-9-]*-\d{4}-\d{2}-\d{2}\.md$')
+          PATTERN_ADR = re.compile(r'^ADR-\d{3}-[a-z0-9-]+\.md$')
+          PATTERN_RETRO = re.compile(r'^\d{4}-\d{2}-\d{2}-retro\.md$')
+          ALLOWED_SPECIAL = ['README.md', 'CHANGELOG.md', 'DECISIONS.md', 'CLAUDE.md',
+                             'AGENTS.md', 'CONTRIBUTING.md', 'template-retro.md',
+                             'project-overview.md', 'team-members.md', 'conventions.md',
+                             'glossary.md', 'architecture.md', 'intake-rules.md',
+                             'permissions.md', 'validation-matrix.md',
+                             'decision-record.md', 'story-packet.md', 'adr.md']
+
+          errors = []
+          for root, dirs, files in os.walk('.'):
+              # Skip hidden directories
+              dirs[:] = [d for d in dirs if not d.startswith('.')]
+              if 'node_modules' in dirs:
+                  dirs.remove('node_modules')
+
+              for f in files:
+                  if not f.endswith('.md'):
+                      continue
+                  if f in ALLOWED_SPECIAL:
+                      continue
+
+                  path = os.path.join(root, f)
+
+                  # Apply rules theo folder
+                  if 'shared/content/' in path:
+                      if not PATTERN_CONTENT.match(f):
+                          errors.append(f"❌ {path}: must match `slug-YYYY-MM-DD.md`")
+                  elif 'shared/adr/' in path:
+                      if not PATTERN_ADR.match(f):
+                          errors.append(f"❌ {path}: must match `ADR-NNN-slug.md`")
+                  elif 'shared/retrospectives/' in path:
+                      if not PATTERN_RETRO.match(f):
+                          errors.append(f"❌ {path}: must match `YYYY-MM-DD-retro.md`")
+
+          if errors:
+              print("=== FILE NAMING VIOLATIONS ===")
+              for e in errors:
+                  print(e)
+              sys.exit(1)
+          else:
+              print("✅ All file names follow conventions")
+          EOF

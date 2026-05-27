@@ -1,0 +1,106 @@
+name: 💡 Proposal — Đề xuất task/idea mới
+description: Đề xuất 1 task mới (đặc biệt cho high-risk cần thảo luận trước)
+title: "[PROPOSAL] "
+labels: ["proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Dùng template này khi:**
+        - Bạn có ý tưởng task **HIGH-RISK** cần thảo luận trước khi mở PR
+        - Bạn muốn đề xuất feature/content lớn cần buy-in từ team
+        - Bạn không chắc nên approach thế nào
+
+        Tiny/normal tasks → mở thẳng PR, không cần issue này.
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: 💡 Ý tưởng — TL;DR
+      description: 1-2 câu mô tả ý tưởng
+      placeholder: |
+        Đề xuất restructure shared/content/ — gom theo topic thay vì date
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 🎯 Motivation
+      description: Tại sao cần làm? Vấn đề gì đang gặp phải?
+      placeholder: |
+        Hiện tại có 60+ articles xếp theo date, khó tìm theo chủ đề.
+        Người mới vào team mất 1 ngày để hiểu folder structure.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: lane
+    attributes:
+      label: 📋 Lane dự kiến
+      options:
+        - "🟡 Normal — Task vừa, 1-3 ngày"
+        - "🔴 High-risk — Cần Decision Record"
+        - "❓ Chưa rõ, cần thảo luận lane"
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 📂 Scope
+      description: Phạm vi ảnh hưởng
+      placeholder: |
+        **Trong scope:**
+        - Move ~60 article files
+        - Update internal links
+        - Update CHANGELOG
+
+        **Ngoài scope:**
+        - Đổi format frontmatter (sẽ làm sau nếu cần)
+        - Migrate external links (Notion docs)
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: ⚖️ Alternatives đã nghĩ tới
+      description: Có cách nào khác giải quyết vấn đề này không?
+      placeholder: |
+        A. Restructure folder (đề xuất hiện tại)
+        B. Thêm tags trong frontmatter, không di chuyển file
+        C. Tạo file index.md mapping topic → files
+    validations:
+      required: false
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: ⚠️ Rủi ro
+      description: Có thể đi sai ở đâu?
+      placeholder: |
+        - Broken internal links nếu không update đồng thời
+        - Member đang viết article có thể conflict
+        - Search engine indexing sẽ reset
+
+  - type: textarea
+    id: people
+    attributes:
+      label: 👥 Ai nên tham gia
+      placeholder: |
+        - @team-lead — direction
+        - @content-expert — review impact
+        - @ci-maintainer — update CI scripts nếu cần
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: ✅ Xác nhận
+      options:
+        - label: Tôi đã search issues/PRs hiện có, đề xuất này chưa được thảo luận
+          required: true
+        - label: Tôi sẵn sàng thảo luận và refine ý tưởng trước khi mở PR
+          required: true
+        - label: (Nếu high-risk) Tôi hiểu mình cần buy-in từ team lead trước khi code
+          required: false

@@ -1,0 +1,77 @@
+name: Auto-label PR
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  label:
+    name: Apply labels based on branch name
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Apply lane label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.payload.pull_request.head.ref;
+            const labels = [];
+
+            // Lane labels theo branch prefix
+            if (branch.startsWith('tiny/'))       labels.push('lane:tiny');
+            if (branch.startsWith('normal/'))     labels.push('lane:normal');
+            if (branch.startsWith('high-risk/'))  labels.push('lane:high-risk');
+            if (branch.startsWith('docs/'))       labels.push('type:docs');
+            if (branch.startsWith('chore/'))      labels.push('type:chore');
+            if (branch.startsWith('experiment/')) labels.push('type:experiment');
+
+            // Area labels theo path
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+
+            const areas = new Set();
+            for (const f of files) {
+              if (f.filename.startsWith('shared/content/'))      areas.add('area:content');
+              if (f.filename.startsWith('shared/adr/'))          areas.add('area:architecture');
+              if (f.filename.startsWith('shared/DECISIONS.md'))  areas.add('area:decisions');
+              if (f.filename.startsWith('_meta/'))               areas.add('area:meta');
+              if (f.filename.startsWith('_context/'))            areas.add('area:context');
+              if (f.filename.startsWith('.github/'))             areas.add('area:ci');
+              if (f.filename.startsWith('.claude/'))             areas.add('area:claude');
+              if (f.filename.startsWith('scripts/'))             areas.add('area:scripts');
+            }
+
+            const allLabels = [...labels, ...areas];
+
+            if (allLabels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                labels: allLabels,
+              });
+              console.log(`Applied labels: ${allLabels.join(', ')}`);
+            }
+
+            // Warning cho high-risk PR thiếu Decision Record
+            if (branch.startsWith('high-risk/')) {
+              const hasDR = files.some(f =>
+                f.filename === 'shared/DECISIONS.md' ||
+                f.filename.startsWith('shared/adr/')
+              );
+              if (!hasDR) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number,
+                  body: `⚠️ **High-risk PR detected** — Please add a Decision Record:\n\n` +
+                        `- For policy/process decisions: update \`shared/DECISIONS.md\` (D-NNN entry)\n` +
+                        `- For architectural changes: add \`shared/adr/ADR-NNN-*.md\`\n\n` +
+                        `See \`_meta/templates/decision-record.md\` and \`_meta/templates/adr.md\`.`,
+                });
+              }
+            }

@@ -1,0 +1,118 @@
+name: Validate Frontmatter
+
+# Khi nào chạy: mọi PR vào main
+on:
+  pull_request:
+    paths:
+      - 'shared/content/**/*.md'
+      - 'shared/adr/**/*.md'
+      - 'shared/retrospectives/**/*.md'
+      - '_meta/templates/**/*.md'
+
+jobs:
+  validate:
+    name: Check YAML frontmatter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Lấy cả lịch sử để diff với main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml jsonschema
+
+      - name: Get changed markdown files
+        id: changed-files
+        run: |
+          # Lấy danh sách file .md thay đổi trong PR
+          CHANGED=$(git diff --name-only origin/main...HEAD -- '*.md' | tr '\n' ' ')
+          echo "files=$CHANGED" >> $GITHUB_OUTPUT
+          echo "Changed files: $CHANGED"
+
+      - name: Validate frontmatter
+        if: steps.changed-files.outputs.files != ''
+        run: |
+          python <<'EOF'
+          import os
+          import sys
+          import yaml
+          import re
+
+          REQUIRED_FIELDS = {
+              'shared/content/': ['title', 'author', 'created', 'status', 'type'],
+              'shared/adr/': ['id', 'title', 'date', 'deciders', 'status'],
+              'shared/retrospectives/': ['period', 'date', 'author'],
+          }
+
+          VALID_STATUSES = ['draft', 'review', 'needs-revision', 'approved', 'rejected', 'deprecated']
+          VALID_TYPES = ['tiny', 'normal', 'high-risk']
+
+          files = """${{ steps.changed-files.outputs.files }}""".strip().split()
+          errors = []
+
+          for file_path in files:
+              if not file_path.endswith('.md') or not os.path.exists(file_path):
+                  continue
+
+              # Skip files outside tracked paths
+              required = None
+              for prefix, fields in REQUIRED_FIELDS.items():
+                  if file_path.startswith(prefix):
+                      required = fields
+                      break
+              if required is None:
+                  continue
+
+              with open(file_path, 'r', encoding='utf-8') as f:
+                  content = f.read()
+
+              # Extract frontmatter
+              match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+              if not match:
+                  errors.append(f"❌ {file_path}: No frontmatter found")
+                  continue
+
+              try:
+                  fm = yaml.safe_load(match.group(1))
+              except yaml.YAMLError as e:
+                  errors.append(f"❌ {file_path}: Invalid YAML — {e}")
+                  continue
+
+              # Check required fields
+              for field in required:
+                  if field not in fm:
+                      errors.append(f"❌ {file_path}: Missing required field `{field}`")
+
+              # Check enums
+              if 'status' in fm and fm['status'] not in VALID_STATUSES:
+                  errors.append(f"❌ {file_path}: status `{fm['status']}` not in {VALID_STATUSES}")
+              if 'type' in fm and fm['type'] not in VALID_TYPES:
+                  errors.append(f"❌ {file_path}: type `{fm['type']}` not in {VALID_TYPES}")
+
+              # Check date format
+              import datetime
+              for date_field in ['created', 'date', 'last_updated']:
+                  if date_field in fm:
+                      val = str(fm[date_field])
+                      if not re.match(r'^\d{4}-\d{2}-\d{2}$', val):
+                          errors.append(f"❌ {file_path}: {date_field} `{val}` should be YYYY-MM-DD")
+
+              if not errors or not any(file_path in e for e in errors):
+                  print(f"✅ {file_path}: frontmatter OK")
+
+          if errors:
+              print("\n=== FRONTMATTER VALIDATION FAILED ===")
+              for e in errors:
+                  print(e)
+              sys.exit(1)
+          else:
+              print("\n✅ All frontmatter valid!")
+          EOF

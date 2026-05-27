@@ -1,0 +1,38 @@
+# Local work area (traces, drafts, personal notes)
+.work/
+
+# Claude Code cache
+.claude/cache/
+.claude/temp/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node.js (nếu CI dùng markdownlint)
+node_modules/
+
+# Python (nếu local dev cho scripts)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Build artifacts
+dist/
+build/
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local

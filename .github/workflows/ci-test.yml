@@ -1,0 +1,60 @@
+name: CI — Tests & Lint
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - '.github/workflows/ci-test.yml'
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check (TypeScript)
+        run: npm run typecheck
+        # NOTE: Add "typecheck": "tsc --noEmit" to package.json scripts
+        continue-on-error: true   # Allow failure during initial setup
+
+      - name: Lint (ESLint)
+        run: npm run lint
+        # NOTE: Add "lint": "eslint src tests" to package.json scripts
+        continue-on-error: true
+
+      - name: Run tests
+        run: npm test -- --coverage
+        # NOTE: Add jest config in package.json or jest.config.js
+        continue-on-error: true
+
+      - name: Upload coverage
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+      - name: Check coverage threshold
+        run: |
+          # TODO: Setup coverage threshold check
+          # vd: minimum 70% statements
+          echo "Coverage check placeholder"
+        continue-on-error: true
