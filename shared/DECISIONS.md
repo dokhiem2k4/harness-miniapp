@@ -94,3 +94,48 @@ Khi `/intake` tạo ADR mới, `/pr` pre-flight check (theo content.yaml schema)
 - Sau 3 tháng nếu thấy việc field cross-compat gây confuse
 
 ---
+
+## D-004: Per-path status enum + date normalization in CI workflows
+
+- **Date:** 2026-05-27
+- **Deciders:** @dokhiem2k4
+- **Status:** Active
+- **Related PR:** TBD (after this commit)
+
+### TL;DR
+CI workflows `validate-frontmatter.yml` và `validate-schemas.yml` được sửa để:
+1. Status enum check **per path** (ADR vs content có lifecycle khác nhau)
+2. Normalize YAML date objects về string trước khi pass cho jsonschema
+
+### Lý do
+PR #1 (ADR-002) fail CI sau khi PR #2 (schema fix) merge vì 2 lý do:
+1. ADR status `Proposed` không nằm trong content status enum hardcoded
+2. YAML auto-parse `date: 2026-05-27` thành `datetime.date` object, không phải string
+
+### Alternatives considered
+
+#### Option A: Per-path enum + date normalize ✅ CHỌN
+- Pros: Fix root cause, ADR và content có lifecycle riêng đúng nghĩa
+- Cons: Workflow phức tạp hơn 1 chút
+
+#### Option B: Force ADR users dùng quote string cho date ❌ LOẠI
+- Pros: Đơn giản workflow
+- Cons: Friction cho member, dễ quên quote, không scalable
+
+#### Option C: Unified status enum (gộp ADR + content statuses) ❌ LOẠI
+- Pros: Một enum duy nhất
+- Cons: Confuse — `Active` cho ADR khác `approved` cho content semantically
+
+### Consequences
+
+- ✅ ADR và content có status lifecycle riêng, đúng nghĩa
+- ✅ Workflow handle YAML date parsing automatically
+- ✅ Member không cần nhớ quote date string
+- ⚠️ Workflow script dài hơn (helper function)
+
+### When to revisit
+
+- Nếu thêm path mới (vd: `shared/specs/`) cần status enum riêng
+- Sau 3 tháng nếu thấy edge case khác (timezone, datetime với time component)
+
+---
