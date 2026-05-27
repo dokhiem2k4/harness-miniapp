@@ -29,6 +29,10 @@
 
 **Tất cả 8 member đều có quyền review high-risk PR.**
 
+Default reviewers (qua CODEOWNERS rule `*`):
+- `@dokhiem2k4` (team lead)
+- `@Jmhzbmcn2` (co-owner default rule — auto-assigned cho mọi PR chưa có area-specific owner)
+
 Round-robin gợi ý để tránh dồn review lên 1 người:
 - Author chọn 2 reviewer ngoài chính mình
 - Ưu tiên người có context với area đang sửa (xem CODEOWNERS)
