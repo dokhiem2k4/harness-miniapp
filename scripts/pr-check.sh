@@ -100,20 +100,29 @@ if [[ -n "$CHANGED_MD" ]]; then
         ;;
     esac
 
-    # Only check shared/ files
+    # Only check shared/ files — required fields differ per path (mirror CI workflow)
     if [[ "$file" == shared/* ]]; then
       if ! head -1 "$file" | grep -q "^---"; then
         echo -e "${RED}❌ $file: Missing frontmatter${NC}"
         ERRORS=$((ERRORS + 1))
       else
-        # Quick check required fields
-        FM=$(sed -n '/^---$/,/^---$/p' "$file" | head -n -1 | tail -n +2)
-        for required in title author created status; do
-          if ! echo "$FM" | grep -q "^${required}:"; then
-            echo -e "${RED}❌ $file: Missing field '${required}' in frontmatter${NC}"
-            ERRORS=$((ERRORS + 1))
-          fi
-        done
+        # Required fields per path category (must match .github/workflows/validate-frontmatter.yml)
+        REQUIRED_FIELDS=""
+        case "$file" in
+          shared/adr/*)            REQUIRED_FIELDS="id title date deciders status" ;;
+          shared/content/*)        REQUIRED_FIELDS="title author created status type" ;;
+          shared/retrospectives/*) REQUIRED_FIELDS="period date author" ;;
+        esac
+
+        if [[ -n "$REQUIRED_FIELDS" ]]; then
+          FM=$(sed -n '/^---$/,/^---$/p' "$file" | head -n -1 | tail -n +2)
+          for required in $REQUIRED_FIELDS; do
+            if ! echo "$FM" | grep -q "^${required}:"; then
+              echo -e "${RED}❌ $file: Missing field '${required}' in frontmatter${NC}"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+        fi
       fi
     fi
   done <<< "$CHANGED_MD"
